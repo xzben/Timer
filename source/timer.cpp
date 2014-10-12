@@ -1,7 +1,6 @@
 #include "timer.h"
-#include <time.h>
+#include "mutex.h"
 #include <cstdio>
-#include <mutex>
 #include <iostream>
 
 #ifdef _WIN32
@@ -43,24 +42,6 @@ int gettimeofday(struct timeval *tp, void *tzp)
 	return (0);
 }
 #endif
-
-class Mutex 
-{
-public:
-	Mutex(){}
-	~Mutex(){}
-
-	void lock()
-	{
-		m_lock.lock();
-	}
-	void unlock()
-	{
-		m_lock.unlock();
-	}
-private:
-	std::mutex m_lock;
-};
 
 struct TimerNode
 {
@@ -331,6 +312,8 @@ int32_t		TimerCore::add_node(TimerNode* node)
 		uint32_t idx = ((expire>>(TIMER_NEAR_SHIFT + level*TIMER_LEVEL_SHIFT)) & TIMER_LEVEL_MASK)-1;
 		m_wait[level][idx].link_node(node);
 	}
+
+	return 0;
 }
 
 int32_t		TimerCore::add_timeout(uint32_t delay_msec, void* data, uint32_t data_size)
@@ -371,7 +354,7 @@ int32_t		TimerCore::add_timeout(uint32_t delay_msec, void* data, uint32_t data_s
 //////////////////////////////////////////////////////////////////////////
 // 华丽分割线，一下为对外抛出接口的实现部分
 
-Timer* Timer::get_instance()
+Timer* Timer::getInstance()
 {
 	static Timer s_instancel;
 
@@ -388,14 +371,19 @@ Timer::~Timer()
 
 }
 
+//获得当前系统时间
+int32_t Timer::getTimeOfDay(struct timeval *tp, void *tzp)
+{
+	return ::gettimeofday(tp, tzp);
+}
 // 初始化定时器
-int32_t	Timer::init_timer()
+int32_t	Timer::initTimer()
 {
 	return TimerCore::get_instance()->init();
 }
 
 // 定时器内部更新，此接口应该由一个放在一个线程中不断的去更新执行
-int32_t	Timer::update_timer()
+int32_t	Timer::updateTimer()
 {
 	uint64_t systime = TimerCore::get_instance()->get_systime();
 	uint64_t cp	 = TimerCore::get_instance()->get_time();
@@ -418,19 +406,30 @@ int32_t	Timer::update_timer()
 }
 
 //向定时器添加定时操作
-int32_t	Timer::add_timeout(uint32_t delay_msec, void* data, uint32_t data_size)
+int32_t	Timer::addTimeout(uint32_t delay_msec, void* data, uint32_t data_size)
 {
 	return TimerCore::get_instance()->add_timeout(delay_msec, data, data_size);
 }
 
 //获取当前时间戳
-uint64_t Timer::get_time()
+uint64_t Timer::getTime()
 {
 	return TimerCore::get_instance()->get_time();
 }
 
 //获取开始运行时间戳
-uint64_t Timer::get_start_time()
+uint64_t Timer::getStartTime()
 {
 	return TimerCore::get_instance()->get_start_time();
+}
+
+struct tm Timer::getSystemLocalTime()
+{
+	time_t rawtime;
+	struct tm * timeinfo;
+
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	
+	return *timeinfo;
 }

@@ -8,17 +8,18 @@ void _timer()
 {
 	while(1)
 	{
-		Timer::get_instance()->update_timer();
+		Timer::getInstance()->updateTimer();
 	}
 }
 
 int main()
 {
-
-	Timer::get_instance()->init_timer();
+	printf("\007The current date/time is: %s", asctime(&Timer::getInstance()->getSystemLocalTime()));
+	
+	Timer::getInstance()->initTimer();
 	std::thread  thd(_timer);
 
-	printf("start time: %lld\n", Timer::get_instance()->get_start_time());
+	printf("start time: %lld\n", Timer::getInstance()->getStartTime());
 	char* str[] = { 
 		"this is timeout one", 
 		"this is timeout two",
@@ -30,7 +31,7 @@ int main()
 	
 	for(int i = 0 ; str[i] != nullptr; i++)
 	{
-		if( 0 !=  Timer::get_instance()->add_timeout((i+1)*100, str[i], strlen(str[i]) + 1) )
+		if( 0 !=  Timer::getInstance()->addTimeout((i+1)*100, str[i], strlen(str[i]) + 1) )
 		{
 			printf("error....\n");
 		}
