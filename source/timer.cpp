@@ -4,7 +4,7 @@
 #include <mutex>
 #include <iostream>
 
-#ifdef __WIN32
+#ifdef _WIN32
 	#include <windows.h>
 #else
 	#include <sys/time.h>
@@ -22,7 +22,7 @@
 
 //////////////////////////////////////////////////////////////////////////
 // 华丽分割线 // 一下为内部实现的细节部分
-#ifdef __WIN32
+#ifdef _WIN32
 int gettimeofday(struct timeval *tp, void *tzp)
 {
 	time_t clock;
